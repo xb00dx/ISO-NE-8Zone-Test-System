@@ -85,6 +85,20 @@ end
 mpc.branch(:,BR_R) = 0; % original data is not zero
 mpc.branch(:,BR_X) = line_data(:,7);
 mpc.branch(:,BR_B) = 0;
+mpc.branch(:,RATE_A) = [600;
+    250;
+    250;
+    600;
+    750;
+    750;
+    750;
+    2500;
+    300;
+    1250;
+    800;
+    2500];
+mpc.branch(:,RATE_B) = mpc.branch(:,RATE_A)*1.1;
+mpc.branch(:,RATE_C) = mpc.branch(:,RATE_A)*1.2;
 mpc.branch(:,TAP) = 0;
 mpc.branch(:,BR_STATUS) = 1;
 
@@ -99,18 +113,20 @@ SEMASS_load = readmatrix([root_folder,'/original/data/loadData/CSV/SEMASS.csv'])
 VT_load = readmatrix([root_folder,'/original/data/loadData/CSV/VT.csv']);
 WCMASS_load = readmatrix([root_folder,'/original/data/loadData/CSV/WCMASS.csv']);
 
-save_folder = ['../recreated/'];
+save_folder = ['../mfiles/'];
 nrow = size(CT_load,1);
+% mptopt = mpoption('out.all',0);
 for i =1:nrow
+    disp(i);
     mpc_i = mpc;
     mpc_i.bus(:,PD) = [CT_load(i,3); ME_load(i,3); NEMASSBOST_load(i,3);...
         NH_load(i,3); RI_load(i,3); SEMASS_load(i,3); VT_load(i,3); WCMASS_load(i,3)];
-    result_i = rundcopf(mpc_i);
+    result_i = rundcopf(mpc_i,mpoption('out.all',0));
     assert(result_i.success);
     
     fname = ['case8_isone_',num2str(CT_load(i,1)),'_',num2str(CT_load(i,2))];
     comment = {'8-zone synthetic grid based on ISO-NE data',...
-        ['  This case represents snapshot ',num2str(CT_load(i,1)),'/96',' and scenario ',num2str(CT_load(i,2)),'/90.'],...
+        ['  This case represents hour ',num2str(CT_load(i,1)),'/96 (4 days)',' and scenario ',num2str(CT_load(i,2)),'/90.'],...
         '  Original system was created by Dheepak Krishnamurthy, Wanning Li',...
         '  and Leigh Tesfatsion from Iowa State University.',...
         '  Please cite [1] when publishing results based on this system.',...
@@ -118,6 +134,8 @@ for i =1:nrow
         '  [1] Krishnamurthy, Dheepak, Wanning Li, and Leigh Tesfatsion.',...
         '  "An 8-zone test system based on ISO New England data: Development',...
         '  and application." IEEE Transactions on Power Systems (2015).',...
+        '',...
+        '  Line capacities (RATE_A, RATE_B, RATE_C) are added based on line flow computation.',...
         '',...
         '  This Matpower case was created by X. Geng (06/21/2020).',...
         '  Complete details (original data, scripts, revised cases) can be found at:',...
